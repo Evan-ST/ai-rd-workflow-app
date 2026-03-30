@@ -9,85 +9,92 @@
 <body>
 <div id="app">
 
-  <!-- ==================== 登录页 ==================== -->
+  <!-- ==================== 登录页（按部门分组） ==================== -->
   <div v-if="view==='login'" class="login-page">
     <div class="login-header">
+      <div class="login-logo">⚡</div>
       <h1>AI研发流程管理平台</h1>
-      <p>请选择您的角色进入系统（演示模式）</p>
+      <p>选择您的部门和角色进入系统</p>
     </div>
-    <div class="role-grid">
-      <div v-for="u in users" :key="u.id" class="role-card" :class="'dept-'+u.deptKey" @click="login(u)">
-        <div class="role-avatar">{{u.avatar}}</div>
-        <div class="role-name">{{u.name}}</div>
-        <div class="role-title">{{u.title}}</div>
-        <div class="role-dept">{{u.department}}</div>
+    <div class="dept-login-grid">
+      <div v-for="dept in deptConfig" :key="dept.key" class="dept-login-card" :style="{'--dept-color': dept.color}">
+        <div class="dept-login-header">
+          <span class="dept-login-icon">{{dept.icon}}</span>
+          <span class="dept-login-name">{{dept.name}}</span>
+        </div>
+        <div class="dept-login-roles">
+          <div class="dept-role-section-label">成员</div>
+          <div v-for="u in getDeptUsers(dept.key)" :key="u.id" class="dept-role-btn" @click="login(u)">
+            <span class="dept-role-avatar">{{u.avatar}}</span>
+            <div class="dept-role-info">
+              <span class="dept-role-name">{{u.name}}</span>
+              <span class="dept-role-title">{{u.title}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="dept-login-tools">
+          <div class="dept-role-section-label">AI 工具</div>
+          <div class="dept-tool-tags">
+            <span v-for="tool in dept.defaultTools.slice(0,4)" :key="tool.id" class="dept-tool-tag">
+              {{tool.icon}} {{tool.name}}
+            </span>
+            <span v-if="dept.defaultTools.length > 4" class="dept-tool-more">+{{dept.defaultTools.length - 4}}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ==================== 主布局 ==================== -->
   <div v-else class="app-layout">
-    <!-- 侧边栏 -->
     <aside class="sidebar">
-      <div class="sidebar-brand">
-        <span class="brand-icon">⚡</span>
-        <span>AI研发平台</span>
-      </div>
+      <div class="sidebar-brand"><span class="brand-icon">⚡</span><span>AI研发平台</span></div>
       <div class="sidebar-user" @click="view='login'">
         <span class="user-avatar">{{currentUser.avatar}}</span>
-        <div>
-          <div class="user-name">{{currentUser.name}}</div>
-          <div class="user-title">{{currentUser.title}}</div>
-        </div>
+        <div><div class="user-name">{{currentUser.name}}</div><div class="user-title">{{currentUser.title}} · {{currentUser.department}}</div></div>
       </div>
       <nav class="sidebar-nav">
-        <a :class="{active:view==='dashboard'}" @click="view='dashboard'">
-          <span class="nav-icon">📊</span>工作台
+        <a :class="{active:view==='dashboard'}" @click="view='dashboard'"><span class="nav-icon">📊</span>工作台
+          <span v-if="myPendingActions.length" class="nav-badge">{{myPendingActions.length}}</span>
         </a>
-        <a :class="{active:view==='projects'}" @click="view='projects'">
-          <span class="nav-icon">📁</span>项目列表
+        <a :class="{active:view==='projects'}" @click="view='projects'"><span class="nav-icon">📁</span>项目列表</a>
+        <a :class="{active:view==='toolbox'}" @click="view='toolbox'"><span class="nav-icon">🤖</span>AI工具箱
+          <span v-if="myNotifications.length" class="nav-badge pulse">{{myNotifications.length}}</span>
         </a>
-        <a v-if="currentUser.role==='engineer'" :class="{active:view==='mytasks'}" @click="view='mytasks'">
-          <span class="nav-icon">✅</span>我的任务
-          <span v-if="myRedCount>0" class="nav-badge">{{myRedCount}}</span>
+        <a v-if="isEngineerOrLead" :class="{active:view==='mytasks'}" @click="view='mytasks'"><span class="nav-icon">✅</span>我的任务
+          <span v-if="myRedCount>0" class="nav-badge red">{{myRedCount}}</span>
         </a>
-        <a v-if="currentUser.role==='engineer'" :class="{active:view==='report'}" @click="view='report'">
-          <span class="nav-icon">📝</span>每日上报
-        </a>
-        <a :class="{active:view==='files'}" @click="view='files'">
-          <span class="nav-icon">📎</span>文件中心
-        </a>
+        <a v-if="isEngineerOrLead" :class="{active:view==='report'}" @click="view='report'"><span class="nav-icon">📝</span>每日上报</a>
+        <a :class="{active:view==='files'}" @click="view='files'"><span class="nav-icon">📎</span>文件中心</a>
       </nav>
-      <div class="sidebar-footer">
-        <a @click="view='login'">🔄 切换角色</a>
-      </div>
+      <div class="sidebar-footer"><a @click="view='login'">🔄 切换角色</a></div>
     </aside>
 
-    <!-- 主内容 -->
     <main class="main-content">
 
       <!-- ========== 工作台 ========== -->
       <div v-if="view==='dashboard'" class="page">
-        <div class="page-header">
-          <h2>工作台</h2>
-          <span class="page-date">{{today}}</span>
-        </div>
+        <div class="page-header"><h2>工作台</h2><span class="page-date">{{today}}</span></div>
         <div class="stat-cards">
-          <div class="stat-card">
-            <div class="stat-num">{{projects.length}}</div>
-            <div class="stat-label">全部项目</div>
-          </div>
-          <div class="stat-card accent">
-            <div class="stat-num">{{myPendingActions.length}}</div>
-            <div class="stat-label">待办事项</div>
-          </div>
-          <div class="stat-card success">
-            <div class="stat-num">{{startedProjects}}</div>
-            <div class="stat-label">已启动项目</div>
-          </div>
-          <div class="stat-card warn" v-if="currentUser.role==='engineer'">
-            <div class="stat-num">{{myRedCount}}</div>
-            <div class="stat-label">标红任务</div>
+          <div class="stat-card"><div class="stat-num">{{projects.length}}</div><div class="stat-label">全部项目</div></div>
+          <div class="stat-card accent"><div class="stat-num">{{myPendingActions.length}}</div><div class="stat-label">待办事项</div></div>
+          <div class="stat-card success"><div class="stat-num">{{startedProjects}}</div><div class="stat-label">已启动</div></div>
+          <div class="stat-card warn"><div class="stat-num">{{myNotifications.length}}</div><div class="stat-label">工具通知</div></div>
+        </div>
+
+        <!-- 工具产出通知（高亮） -->
+        <div class="card" v-if="myNotifications.length">
+          <h3>🔔 工具产出通知 <span class="highlight-hint">需要您处理</span></h3>
+          <div class="notification-list">
+            <div v-for="n in myNotifications" :key="n.id" class="notification-item highlight-glow" @click="openToolResult(n)">
+              <span class="noti-icon">{{n.toolIcon}}</span>
+              <div class="noti-body">
+                <div class="noti-title">{{n.toolName}} → 指派给您</div>
+                <div class="noti-from">来自：{{getUserName(n.fromUser)}} · {{n.date}}</div>
+                <div class="noti-preview">{{n.preview}}</div>
+              </div>
+              <span class="noti-arrow">→</span>
+            </div>
           </div>
         </div>
 
@@ -101,10 +108,71 @@
             </div>
           </div>
         </div>
-        <div class="card" v-else>
-          <div class="empty-state">
-            <div class="empty-icon">🎉</div>
-            <p>当前没有待办事项</p>
+        <div class="card" v-if="!myPendingActions.length && !myNotifications.length">
+          <div class="empty-state"><div class="empty-icon">🎉</div><p>当前没有待办事项</p></div>
+        </div>
+      </div>
+
+      <!-- ========== AI工具箱 ========== -->
+      <div v-if="view==='toolbox'" class="page">
+        <div class="page-header">
+          <h2>🤖 AI工具箱 — {{currentUser.department}}</h2>
+          <button class="btn btn-outline" @click="showAddToolModal=true">+ 自定义工具</button>
+        </div>
+
+        <!-- 工具通知提醒 -->
+        <div class="card" v-if="myNotifications.length" style="border-left:4px solid var(--warning);">
+          <h3>🔔 待处理的工具产出</h3>
+          <div class="notification-list">
+            <div v-for="n in myNotifications" :key="n.id" class="notification-item highlight-glow" @click="openToolResult(n)">
+              <span class="noti-icon">{{n.toolIcon}}</span>
+              <div class="noti-body">
+                <div class="noti-title">{{n.toolName}}</div>
+                <div class="noti-from">来自 {{getUserName(n.fromUser)}} · {{n.date}}</div>
+              </div>
+              <button class="btn btn-sm btn-primary" @click.stop="openToolResult(n)">查看</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 当前部门工具 -->
+        <div class="card">
+          <h3>{{currentDeptConfig.icon}} {{currentDeptConfig.name}} 专属工具</h3>
+          <div class="tool-grid">
+            <div v-for="tool in myDeptTools" :key="tool.id" class="tool-card" @click="openTool(tool)">
+              <div class="tool-card-icon">{{tool.icon}}</div>
+              <div class="tool-card-name">{{tool.name}}</div>
+              <div class="tool-card-desc">{{tool.description}}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 其他部门工具（浏览） -->
+        <div class="card">
+          <h3>🏢 其他部门工具</h3>
+          <div v-for="dept in otherDepts" :key="dept.key" class="other-dept-tools">
+            <div class="other-dept-label" :style="{color: dept.color}">{{dept.icon}} {{dept.name}}</div>
+            <div class="tool-tag-row">
+              <span v-for="tool in dept.allTools" :key="tool.id" class="tool-browse-tag" @click="openTool(tool)">
+                {{tool.icon}} {{tool.name}}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 工具使用记录 -->
+        <div class="card" v-if="myToolOutputs.length">
+          <h3>📋 我的工具使用记录</h3>
+          <div v-for="o in myToolOutputs" :key="o.id" class="tool-output-record" @click="viewOutputDetail(o)">
+            <div class="tor-header">
+              <span class="tor-tool">{{o.toolIcon}} {{o.toolName}}</span>
+              <span class="tor-date">{{o.date}}</span>
+            </div>
+            <div class="tor-preview">{{o.preview}}</div>
+            <div class="tor-route" v-if="o.routedTo">
+              → 已发送给 <strong>{{getUserName(o.routedTo)}}</strong>
+              <span v-if="o.routedTask"> (任务：{{o.routedTask}})</span>
+            </div>
           </div>
         </div>
       </div>
@@ -113,32 +181,19 @@
       <div v-if="view==='projects'" class="page">
         <div class="page-header">
           <h2>项目列表</h2>
-          <button v-if="currentUser.role==='product_manager'" class="btn btn-primary" @click="openCreateProject()">
-            + 新建项目
-          </button>
+          <button v-if="currentUser.role==='product_manager'" class="btn btn-primary" @click="openCreateProject()">+ 新建项目</button>
         </div>
         <div class="card" v-if="projects.length===0">
-          <div class="empty-state">
-            <div class="empty-icon">📁</div>
-            <p>暂无项目</p>
+          <div class="empty-state"><div class="empty-icon">📁</div><p>暂无项目</p>
             <button v-if="currentUser.role==='product_manager'" class="btn btn-primary" @click="openCreateProject()">创建第一个项目</button>
           </div>
         </div>
         <div v-else class="project-list">
           <div v-for="p in projects" :key="p.id" class="project-card" @click="openProject(p.id)">
-            <div class="proj-header">
-              <h4>{{p.name}}</h4>
-              <span class="status-tag" :class="'st-'+p.status">{{statusLabel(p.status)}}</span>
-            </div>
+            <div class="proj-header"><h4>{{p.name}}</h4><span class="status-tag" :class="'st-'+p.status">{{statusLabel(p.status)}}</span></div>
             <p class="proj-desc">{{p.description}}</p>
-            <div class="proj-meta">
-              <span>创建人：{{getUserName(p.createdBy)}}</span>
-              <span>{{p.createdAt}}</span>
-            </div>
-            <div class="proj-progress">
-              <div class="prog-bar"><div class="prog-fill" :style="{width: stageProgress(p)+'%'}"></div></div>
-              <span class="prog-text">{{stageProgress(p)}}%</span>
-            </div>
+            <div class="proj-meta"><span>创建人：{{getUserName(p.createdBy)}}</span><span>{{p.createdAt}}</span></div>
+            <div class="proj-progress"><div class="prog-bar"><div class="prog-fill" :style="{width: stageProgress(p)+'%'}"></div></div><span class="prog-text">{{stageProgress(p)}}%</span></div>
           </div>
         </div>
       </div>
@@ -146,61 +201,33 @@
       <!-- ========== 项目详情 ========== -->
       <div v-if="view==='project' && currentProject" class="page project-detail">
         <div class="page-header">
-          <div>
-            <a class="back-link" @click="view='projects'">← 返回项目列表</a>
-            <h2>{{currentProject.name}}</h2>
-          </div>
+          <div><a class="back-link" @click="view='projects'">← 返回项目列表</a><h2>{{currentProject.name}}</h2></div>
           <span class="status-tag big" :class="'st-'+currentProject.status">{{statusLabel(currentProject.status)}}</span>
         </div>
-
-        <!-- 流程阶段导航 -->
         <div class="stage-nav">
-          <div v-for="(s,i) in stages" :key="s.key"
-               class="stage-item" :class="{active:currentStage===s.key, done:isStageCompleted(s.key, currentProject), current:currentProject.status===s.key}"
-               @click="currentStage=s.key">
-            <div class="stage-num">{{i+1}}</div>
-            <div class="stage-label">{{s.label}}</div>
+          <div v-for="(s,i) in stages" :key="s.key" class="stage-item" :class="{active:currentStage===s.key, done:isStageCompleted(s.key, currentProject), current:currentProject.status===s.key}" @click="currentStage=s.key">
+            <div class="stage-num">{{i+1}}</div><div class="stage-label">{{s.label}}</div>
           </div>
         </div>
-
-        <!-- 阶段内容 -->
         <div class="stage-content">
-
-          <!-- Stage: PRD -->
+          <!-- PRD Draft -->
           <div v-if="currentStage==='prd_draft'" class="card">
             <h3>📄 产品需求文档（PRD）</h3>
             <div class="doc-toolbar">
               <button class="btn btn-ai" @click="generatePRD()" v-if="currentProject.status==='prd_draft'">🤖 AI 生成 PRD</button>
-              <button class="btn btn-outline" @click="editingPRD=!editingPRD" v-if="currentProject.prd.content">
-                {{editingPRD?'预览':'编辑'}}
-              </button>
-              <button class="btn btn-primary" @click="submitPRD()" v-if="currentProject.status==='prd_draft' && currentProject.prd.content">
-                提交审核 →
-              </button>
+              <button class="btn btn-outline" @click="editingPRD=!editingPRD" v-if="currentProject.prd.content">{{editingPRD?'预览':'编辑'}}</button>
+              <button class="btn btn-primary" @click="submitPRD()" v-if="currentProject.status==='prd_draft' && currentProject.prd.content">提交审核 →</button>
             </div>
-            <div v-if="!currentProject.prd.content" class="empty-state">
-              <div class="empty-icon">📝</div>
-              <p>点击「AI 生成 PRD」自动生成产品需求文档</p>
-            </div>
+            <div v-if="!currentProject.prd.content" class="empty-state"><div class="empty-icon">📝</div><p>点击「AI 生成 PRD」自动生成产品需求文档</p></div>
             <textarea v-else-if="editingPRD" class="doc-editor" v-model="currentProject.prd.content" @input="saveProjects()"></textarea>
             <div v-else class="doc-preview" v-html="renderDoc(currentProject.prd.content)"></div>
             <div class="file-section" v-if="currentProject.prd.content">
               <h4>📎 附件</h4>
-              <div class="file-list">
-                <div v-for="f in getStageFiles('prd')" :key="f.id" class="file-item">
-                  <span class="file-icon">📄</span>
-                  <span>{{f.name}}</span>
-                  <span class="file-size">{{f.size}}</span>
-                </div>
-              </div>
-              <label class="btn btn-outline btn-sm file-upload-btn">
-                + 上传文件
-                <input type="file" multiple @change="uploadFile($event, 'prd')" hidden>
-              </label>
+              <div class="file-list"><div v-for="f in getStageFiles('prd')" :key="f.id" class="file-item"><span class="file-icon">📄</span><span>{{f.name}}</span><span class="file-size">{{f.size}}</span></div></div>
+              <label class="btn btn-outline btn-sm file-upload-btn">+ 上传文件<input type="file" multiple @change="uploadFile($event, 'prd')" hidden></label>
             </div>
           </div>
-
-          <!-- Stage: Review -->
+          <!-- PRD Review -->
           <div v-if="currentStage==='prd_review'" class="card">
             <h3>👔 PRD 审核</h3>
             <div class="doc-preview" v-html="renderDoc(currentProject.prd.content)"></div>
@@ -209,79 +236,46 @@
             </div>
             <div v-else-if="currentProject.status!=='prd_review'" class="stage-done-hint">✅ 此阶段已完成</div>
           </div>
-
-          <!-- Stage: PM Assign -->
+          <!-- PM Assign -->
           <div v-if="currentStage==='pm_assign'" class="card">
             <h3>📊 指派项目经理</h3>
             <div v-if="currentProject.status==='pm_assign' && currentUser.role==='dept_manager'">
               <p style="margin-bottom:16px;">请选择负责此项目的项目经理：</p>
               <div class="member-select-grid">
-                <div v-for="pm in projectManagers" :key="pm.id" class="member-option"
-                     :class="{selected: currentProject.projectManager===pm.id}"
-                     @click="currentProject.projectManager=pm.id; saveProjects()">
-                  <span class="member-avatar">{{pm.avatar}}</span>
-                  <span class="member-name">{{pm.name}}</span>
+                <div v-for="pm in projectManagers" :key="pm.id" class="member-option" :class="{selected: currentProject.projectManager===pm.id}" @click="currentProject.projectManager=pm.id; saveProjects()">
+                  <span class="member-avatar">{{pm.avatar}}</span><span class="member-name">{{pm.name}}</span>
                 </div>
               </div>
-              <button class="btn btn-primary" style="margin-top:16px;" :disabled="!currentProject.projectManager" @click="assignPM()">
-                确认指派 →
-              </button>
+              <button class="btn btn-primary" style="margin-top:16px;" :disabled="!currentProject.projectManager" @click="assignPM()">确认指派 →</button>
             </div>
-            <div v-else-if="currentProject.projectManager">
-              <p>已指派项目经理：<strong>{{getUserName(currentProject.projectManager)}}</strong></p>
-              <div class="stage-done-hint">✅ 此阶段已完成</div>
-            </div>
+            <div v-else-if="currentProject.projectManager"><p>已指派项目经理：<strong>{{getUserName(currentProject.projectManager)}}</strong></p><div class="stage-done-hint">✅ 此阶段已完成</div></div>
           </div>
-
-          <!-- Stage: WBS -->
+          <!-- WBS -->
           <div v-if="currentStage==='wbs_generate'" class="card">
             <h3>📊 WBS 任务分解</h3>
             <div class="doc-toolbar">
-              <button class="btn btn-ai" @click="generateWBS()" v-if="currentProject.status==='wbs_generate' && currentProject.wbs.length===0">
-                🤖 AI 生成 WBS
-              </button>
-              <button class="btn btn-primary" @click="submitWBS()"
-                      v-if="currentProject.status==='wbs_generate' && currentProject.wbs.length>0 && canOperateAsProjectManager">
-                分发至各部门 →
-              </button>
+              <button class="btn btn-ai" @click="generateWBS()" v-if="currentProject.status==='wbs_generate' && currentProject.wbs.length===0">🤖 AI 生成 WBS</button>
+              <button class="btn btn-primary" @click="submitWBS()" v-if="currentProject.status==='wbs_generate' && currentProject.wbs.length>0 && canOperateAsProjectManager">分发至各部门 →</button>
             </div>
-            <div v-if="currentProject.wbs.length===0" class="empty-state">
-              <div class="empty-icon">📋</div>
-              <p>点击「AI 生成 WBS」自动分解项目任务</p>
-            </div>
+            <div v-if="currentProject.wbs.length===0" class="empty-state"><div class="empty-icon">📋</div><p>点击「AI 生成 WBS」自动分解项目任务</p></div>
             <div v-else class="wbs-tree">
               <div v-for="task in topLevelTasks" :key="task.id" class="wbs-group">
-                <div class="wbs-parent">
-                  <span class="wbs-dept-tag" :class="'dept-'+task.deptKey">{{task.department}}</span>
-                  <span class="wbs-name">{{task.name}}</span>
-                  <span class="wbs-hours">{{task.estimatedHours}}h</span>
-                  <button class="btn-icon" @click="addSubTask(task)" v-if="canOperateAsProjectManager" title="添加子任务">+</button>
-                </div>
-                <div v-for="sub in getChildren(task.id)" :key="sub.id" class="wbs-child">
-                  <span class="wbs-name">{{sub.name}}</span>
-                  <span class="wbs-hours">{{sub.estimatedHours}}h</span>
-                  <input v-if="canOperateAsProjectManager" class="wbs-edit-name" v-model="sub.name" @input="saveProjects()" placeholder="任务名称">
-                </div>
+                <div class="wbs-parent"><span class="wbs-dept-tag" :class="'dept-'+task.deptKey">{{task.department}}</span><span class="wbs-name">{{task.name}}</span><span class="wbs-hours">{{task.estimatedHours}}h</span><button class="btn-icon" @click="addSubTask(task)" v-if="canOperateAsProjectManager" title="添加子任务">+</button></div>
+                <div v-for="sub in getChildren(task.id)" :key="sub.id" class="wbs-child"><span class="wbs-name">{{sub.name}}</span><span class="wbs-hours">{{sub.estimatedHours}}h</span></div>
               </div>
             </div>
           </div>
-
-          <!-- Stage: Team Building -->
+          <!-- Team Building -->
           <div v-if="currentStage==='team_building'" class="card">
             <h3>👥 团队组建</h3>
             <p style="margin-bottom:16px;color:#6b7280;">各部门负责人请为本项目选择工程师</p>
             <div class="team-grid">
               <div v-for="dept in departments" :key="dept.key" class="team-dept-card" :class="{'confirmed':currentProject.teamConfirmed[dept.key]}">
-                <div class="team-dept-header">
-                  <span>{{dept.icon}} {{dept.name}}</span>
-                  <span v-if="currentProject.teamConfirmed[dept.key]" class="confirmed-badge">✅ 已确认</span>
-                </div>
+                <div class="team-dept-header"><span>{{dept.icon}} {{dept.name}}</span><span v-if="currentProject.teamConfirmed[dept.key]" class="confirmed-badge">✅ 已确认</span></div>
                 <div class="team-dept-lead">负责人：{{dept.leadName}}</div>
                 <div v-if="canSelectForDept(dept.key)" class="member-select">
-                  <div v-for="eng in getEngineersForDept(dept.key)" :key="eng.id" class="member-checkbox"
-                       :class="{checked: isTeamMember(dept.key, eng.id)}" @click="toggleTeamMember(dept.key, eng.id)">
-                    <span class="cb-box">{{isTeamMember(dept.key,eng.id)?'☑':'☐'}}</span>
-                    <span>{{eng.name}}（{{eng.specialty}}）</span>
+                  <div v-for="eng in getEngineersForDept(dept.key)" :key="eng.id" class="member-checkbox" :class="{checked: isTeamMember(dept.key, eng.id)}" @click="toggleTeamMember(dept.key, eng.id)">
+                    <span class="cb-box">{{isTeamMember(dept.key,eng.id)?'☑':'☐'}}</span><span>{{eng.name}}（{{eng.specialty || eng.title}}）</span>
                   </div>
                   <button class="btn btn-primary btn-sm" style="margin-top:10px;" @click="confirmDeptTeam(dept.key)">确认人员</button>
                 </div>
@@ -291,134 +285,73 @@
                 </div>
               </div>
             </div>
-            <button class="btn btn-primary" style="margin-top:20px;" v-if="allTeamsConfirmed && currentProject.status==='team_building'"
-                    @click="completeTeamBuilding()">
-              团队组建完成，预约项目评审会议 →
-            </button>
+            <button class="btn btn-primary" style="margin-top:20px;" v-if="allTeamsConfirmed && currentProject.status==='team_building'" @click="completeTeamBuilding()">团队组建完成，预约项目评审会议 →</button>
           </div>
-
-          <!-- Stage: Meeting -->
+          <!-- Meeting -->
           <div v-if="currentStage==='meeting'" class="card">
             <h3>📅 项目评审会议</h3>
             <div v-if="currentProject.status==='meeting' && !currentProject.meeting.scheduled">
               <div class="meeting-form">
-                <div class="form-group">
-                  <label>会议日期</label>
-                  <input type="date" v-model="meetingDate" class="form-input">
-                </div>
-                <div class="form-group">
-                  <label>会议时间</label>
-                  <input type="time" v-model="meetingTime" class="form-input">
-                </div>
-                <div class="form-group">
-                  <label>会议室</label>
-                  <select v-model="meetingRoom" class="form-input">
-                    <option value="">请选择</option>
-                    <option>A301 大会议室</option>
-                    <option>B205 中会议室</option>
-                    <option>C102 小会议室</option>
-                  </select>
-                </div>
-                <div class="meeting-attendees">
-                  <label>参会人员（自动）</label>
-                  <div class="attendee-tags">
-                    <span v-for="uid in getAllProjectMembers" :key="uid" class="attendee-tag">{{getUserName(uid)}}</span>
-                  </div>
-                </div>
+                <div class="form-group"><label>会议日期</label><input type="date" v-model="meetingDate" class="form-input"></div>
+                <div class="form-group"><label>会议时间</label><input type="time" v-model="meetingTime" class="form-input"></div>
+                <div class="form-group"><label>会议室</label><select v-model="meetingRoom" class="form-input"><option value="">请选择</option><option>A301 大会议室</option><option>B205 中会议室</option><option>C102 小会议室</option></select></div>
+                <div class="meeting-attendees"><label>参会人员（自动）</label><div class="attendee-tags"><span v-for="uid in getAllProjectMembers" :key="uid" class="attendee-tag">{{getUserName(uid)}}</span></div></div>
               </div>
-              <button class="btn btn-primary" @click="scheduleMeeting()" :disabled="!meetingDate||!meetingTime||!meetingRoom">
-                📅 一键预约会议
-              </button>
+              <button class="btn btn-primary" @click="scheduleMeeting()" :disabled="!meetingDate||!meetingTime||!meetingRoom">📅 一键预约会议</button>
             </div>
             <div v-else-if="currentProject.meeting.scheduled && !currentProject.meeting.summary">
-              <div class="meeting-info">
-                <p>📅 时间：{{currentProject.meeting.date}} {{currentProject.meeting.time}}</p>
-                <p>🏢 会议室：{{currentProject.meeting.room}}</p>
-                <p>👥 参会人数：{{getAllProjectMembers.length}} 人</p>
-              </div>
-              <button class="btn btn-ai" @click="generateMeetingSummary()" style="margin-top:16px;">
-                🤖 AI 生成会议纪要（模拟会议结束后）
-              </button>
+              <div class="meeting-info"><p>📅 时间：{{currentProject.meeting.date}} {{currentProject.meeting.time}}</p><p>🏢 会议室：{{currentProject.meeting.room}}</p><p>👥 参会人数：{{getAllProjectMembers.length}} 人</p></div>
+              <button class="btn btn-ai" @click="generateMeetingSummary()" style="margin-top:16px;">🤖 AI 生成会议纪要</button>
             </div>
             <div v-else-if="currentProject.meeting.summary">
-              <div class="meeting-info">
-                <p>📅 {{currentProject.meeting.date}} {{currentProject.meeting.time}} · {{currentProject.meeting.room}}</p>
-              </div>
+              <div class="meeting-info"><p>📅 {{currentProject.meeting.date}} {{currentProject.meeting.time}} · {{currentProject.meeting.room}}</p></div>
               <h4 style="margin-top:16px;">会议纪要</h4>
               <div class="doc-preview" v-html="renderDoc(currentProject.meeting.summary)"></div>
-              <button class="btn btn-primary" @click="advanceToConfirm()" v-if="currentProject.status==='meeting'" style="margin-top:16px;">
-                生成修改后的PRD →
-              </button>
+              <button class="btn btn-primary" @click="advanceToConfirm()" v-if="currentProject.status==='meeting'" style="margin-top:16px;">生成修改后的PRD →</button>
             </div>
           </div>
-
-          <!-- Stage: PRD Confirm -->
+          <!-- PRD Confirm -->
           <div v-if="currentStage==='prd_confirm'" class="card">
             <h3>📄 PRD 修改确认</h3>
             <p style="margin-bottom:12px;color:#6b7280;">AI已根据会议纪要自动修改了PRD，请产品经理确认</p>
-            <div class="prd-version-info">
-              <span class="version-tag old">V{{currentProject.prd.version - 1}} 原始版本</span>
-              <span>→</span>
-              <span class="version-tag new">V{{currentProject.prd.version}} 会议修改版</span>
-            </div>
+            <div class="prd-version-info"><span class="version-tag old">V{{currentProject.prd.version - 1}} 原始版本</span><span>→</span><span class="version-tag new">V{{currentProject.prd.version}} 会议修改版</span></div>
             <textarea v-if="editingPRD" class="doc-editor" v-model="currentProject.prd.content" @input="saveProjects()"></textarea>
             <div v-else class="doc-preview" v-html="renderDoc(currentProject.prd.content)"></div>
             <div class="doc-toolbar" style="margin-top:16px;">
               <button class="btn btn-outline" @click="editingPRD=!editingPRD">{{editingPRD?'预览':'继续编辑'}}</button>
-              <button class="btn btn-primary" v-if="currentProject.status==='prd_confirm' && currentUser.role==='product_manager'" @click="confirmFinalPRD()">
-                ✅ 确认PRD，正式启动项目
-              </button>
+              <button class="btn btn-primary" v-if="currentProject.status==='prd_confirm' && currentUser.role==='product_manager'" @click="confirmFinalPRD()">✅ 确认PRD，正式启动项目</button>
             </div>
           </div>
-
-          <!-- Stage: Started -->
+          <!-- Started -->
           <div v-if="currentStage==='started'" class="card">
             <h3>🚀 项目已启动</h3>
-            <div class="started-dashboard">
-              <div class="stat-cards" style="margin-bottom:20px;">
-                <div class="stat-card"><div class="stat-num">{{currentProject.wbs.length}}</div><div class="stat-label">总任务数</div></div>
-                <div class="stat-card accent"><div class="stat-num">{{inProgressTasks}}</div><div class="stat-label">进行中</div></div>
-                <div class="stat-card success"><div class="stat-num">{{completedTasks}}</div><div class="stat-label">已完成</div></div>
-                <div class="stat-card warn"><div class="stat-num">{{redTasks}}</div><div class="stat-label">标红任务</div></div>
-              </div>
-              <h4>任务看板</h4>
-              <div class="task-board">
-                <div v-for="task in currentProject.wbs" :key="task.id" class="task-card" :class="{'red-task':task.isRed, 'completed':task.status==='completed'}">
-                  <div class="task-header">
-                    <span class="wbs-dept-tag" :class="'dept-'+task.deptKey">{{task.department}}</span>
-                    <span v-if="task.isRed" class="red-dot" title="标红任务">🔴</span>
-                  </div>
-                  <div class="task-name">{{task.name}}</div>
-                  <div class="task-meta">
-                    <span v-if="task.assignee">{{getUserName(task.assignee)}}</span>
-                    <span>{{task.estimatedHours}}h</span>
-                  </div>
-                  <div class="task-progress-bar">
-                    <div class="task-prog-fill" :style="{width:task.progress+'%'}"></div>
-                  </div>
-                  <div class="task-actions" v-if="canOperateAsProjectManager">
-                    <select class="form-input-sm" v-model="task.assignee" @change="saveProjects()">
-                      <option value="">指派人员</option>
-                      <option v-for="mid in getAllProjectEngineers" :key="mid" :value="mid">{{getUserName(mid)}}</option>
-                    </select>
-                    <label class="red-toggle" :class="{on:task.isRed}">
-                      <input type="checkbox" v-model="task.isRed" @change="onRedToggle(task)"> 标红
-                    </label>
-                  </div>
+            <div class="stat-cards" style="margin-bottom:20px;">
+              <div class="stat-card"><div class="stat-num">{{currentProject.wbs.length}}</div><div class="stat-label">总任务数</div></div>
+              <div class="stat-card accent"><div class="stat-num">{{inProgressTasks}}</div><div class="stat-label">进行中</div></div>
+              <div class="stat-card success"><div class="stat-num">{{completedTasks}}</div><div class="stat-label">已完成</div></div>
+              <div class="stat-card warn"><div class="stat-num">{{redTasks}}</div><div class="stat-label">标红任务</div></div>
+            </div>
+            <h4>任务看板</h4>
+            <div class="task-board">
+              <div v-for="task in currentProject.wbs" :key="task.id" class="task-card" :class="{'red-task':task.isRed, 'completed':task.status==='completed'}">
+                <div class="task-header"><span class="wbs-dept-tag" :class="'dept-'+task.deptKey">{{task.department}}</span><span v-if="task.isRed" class="red-dot">🔴</span></div>
+                <div class="task-name">{{task.name}}</div>
+                <div class="task-meta"><span v-if="task.assignee">{{getUserName(task.assignee)}}</span><span>{{task.estimatedHours}}h</span></div>
+                <div class="task-progress-bar"><div class="task-prog-fill" :style="{width:task.progress+'%'}"></div></div>
+                <div class="task-actions" v-if="canOperateAsProjectManager">
+                  <select class="form-input-sm" v-model="task.assignee" @change="saveProjects()"><option value="">指派人员</option><option v-for="mid in getAllProjectEngineers" :key="mid" :value="mid">{{getUserName(mid)}}</option></select>
+                  <label class="red-toggle" :class="{on:task.isRed}"><input type="checkbox" v-model="task.isRed" @change="onRedToggle(task)"> 标红</label>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
       <!-- ========== 我的任务 ========== -->
       <div v-if="view==='mytasks'" class="page">
         <div class="page-header"><h2>我的任务</h2></div>
-        <div v-if="myTasks.length===0" class="card">
-          <div class="empty-state"><div class="empty-icon">✅</div><p>暂无分配给你的任务</p></div>
-        </div>
+        <div v-if="myTasks.length===0" class="card"><div class="empty-state"><div class="empty-icon">✅</div><p>暂无分配给你的任务</p></div></div>
         <div v-else class="my-task-list">
           <div v-for="t in myTasks" :key="t.task.id" class="my-task-card" :class="{'red-task':t.task.isRed}">
             <div class="my-task-header">
@@ -427,26 +360,12 @@
               <span class="my-task-project">{{t.projectName}}</span>
             </div>
             <h4 class="my-task-name">{{t.task.name}}</h4>
-            <div class="my-task-progress">
-              <label>当前进度：{{t.task.progress}}%</label>
-              <input type="range" min="0" max="100" step="5" v-model.number="t.task.progress" @input="onTaskProgress(t)">
-            </div>
+            <div class="my-task-progress"><label>当前进度：{{t.task.progress}}%</label><input type="range" min="0" max="100" step="5" v-model.number="t.task.progress" @input="onTaskProgress(t)"></div>
             <div class="my-task-actions">
-              <select class="form-input-sm" v-model="t.task.status" @change="onTaskStatusChange(t)">
-                <option value="pending">待开始</option>
-                <option value="in_progress">进行中</option>
-                <option value="completed">已完成</option>
-              </select>
-              <label class="btn btn-outline btn-sm file-upload-btn">
-                📎 上传文件
-                <input type="file" multiple @change="uploadFile($event, t.task.id)" hidden>
-              </label>
+              <select class="form-input-sm" v-model="t.task.status" @change="onTaskStatusChange(t)"><option value="pending">待开始</option><option value="in_progress">进行中</option><option value="completed">已完成</option></select>
+              <label class="btn btn-outline btn-sm file-upload-btn">📎 上传文件<input type="file" multiple @change="uploadFile($event, t.task.id)" hidden></label>
             </div>
-            <div v-if="getStageFiles(t.task.id).length" class="file-list" style="margin-top:8px;">
-              <div v-for="f in getStageFiles(t.task.id)" :key="f.id" class="file-item">
-                <span class="file-icon">📄</span><span>{{f.name}}</span><span class="file-size">{{f.size}}</span>
-              </div>
-            </div>
+            <div v-if="getStageFiles(t.task.id).length" class="file-list" style="margin-top:8px;"><div v-for="f in getStageFiles(t.task.id)" :key="f.id" class="file-item"><span class="file-icon">📄</span><span>{{f.name}}</span><span class="file-size">{{f.size}}</span></div></div>
           </div>
         </div>
       </div>
@@ -455,64 +374,23 @@
       <div v-if="view==='report'" class="page">
         <div class="page-header"><h2>每日进度上报</h2></div>
         <div class="card">
-          <div class="form-group">
-            <label>选择项目</label>
-            <select class="form-input" v-model="reportProjectId">
-              <option value="">请选择</option>
-              <option v-for="p in myProjects" :key="p.id" :value="p.id">{{p.name}}</option>
-            </select>
-          </div>
-          <div class="form-group" v-if="reportProjectId">
-            <label>选择任务</label>
-            <select class="form-input" v-model="reportTaskId">
-              <option value="">请选择</option>
-              <option v-for="t in myTasksForProject(reportProjectId)" :key="t.id" :value="t.id">{{t.name}}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>今日工作内容</label>
-            <textarea class="form-input" v-model="reportContent" rows="4" placeholder="请描述今日完成的工作内容..."></textarea>
-          </div>
-          <div class="form-group" v-if="reportTaskId">
-            <label>任务进度：{{reportProgress}}%</label>
-            <input type="range" min="0" max="100" step="5" v-model.number="reportProgress">
-          </div>
+          <div class="form-group"><label>选择项目</label><select class="form-input" v-model="reportProjectId"><option value="">请选择</option><option v-for="p in myProjects" :key="p.id" :value="p.id">{{p.name}}</option></select></div>
+          <div class="form-group" v-if="reportProjectId"><label>选择任务</label><select class="form-input" v-model="reportTaskId"><option value="">请选择</option><option v-for="t in myTasksForProject(reportProjectId)" :key="t.id" :value="t.id">{{t.name}}</option></select></div>
+          <div class="form-group"><label>今日工作内容</label><textarea class="form-input" v-model="reportContent" rows="4" placeholder="请描述今日完成的工作内容..."></textarea></div>
+          <div class="form-group" v-if="reportTaskId"><label>任务进度：{{reportProgress}}%</label><input type="range" min="0" max="100" step="5" v-model.number="reportProgress"></div>
           <button class="btn btn-primary" @click="submitReport()" :disabled="!reportContent">提交日报</button>
         </div>
         <div class="card" v-if="myReports.length" style="margin-top:20px;">
           <h3>历史日报</h3>
-          <div v-for="r in myReports" :key="r.id" class="report-item">
-            <div class="report-header">
-              <span class="report-date">{{r.date}}</span>
-              <span class="report-project">{{getProjectName(r.projectId)}}</span>
-            </div>
-            <p>{{r.content}}</p>
-          </div>
+          <div v-for="r in myReports" :key="r.id" class="report-item"><div class="report-header"><span class="report-date">{{r.date}}</span><span class="report-project">{{getProjectName(r.projectId)}}</span></div><p>{{r.content}}</p></div>
         </div>
       </div>
 
       <!-- ========== 文件中心 ========== -->
       <div v-if="view==='files'" class="page">
-        <div class="page-header">
-          <h2>文件中心</h2>
-          <label class="btn btn-primary file-upload-btn">
-            + 上传文件
-            <input type="file" multiple @change="uploadFile($event, 'general')" hidden>
-          </label>
-        </div>
+        <div class="page-header"><h2>文件中心</h2><label class="btn btn-primary file-upload-btn">+ 上传文件<input type="file" multiple @change="uploadFile($event, 'general')" hidden></label></div>
         <div class="card">
-          <table class="file-table" v-if="allFiles.length">
-            <thead><tr><th>文件名</th><th>大小</th><th>上传人</th><th>关联</th><th>日期</th></tr></thead>
-            <tbody>
-              <tr v-for="f in allFiles" :key="f.id">
-                <td><span class="file-icon">📄</span> {{f.name}}</td>
-                <td>{{f.size}}</td>
-                <td>{{getUserName(f.uploadedBy)}}</td>
-                <td>{{f.stage}}</td>
-                <td>{{f.date}}</td>
-              </tr>
-            </tbody>
-          </table>
+          <table class="file-table" v-if="allFiles.length"><thead><tr><th>文件名</th><th>大小</th><th>上传人</th><th>关联</th><th>日期</th></tr></thead><tbody><tr v-for="f in allFiles" :key="f.id"><td><span class="file-icon">📄</span> {{f.name}}</td><td>{{f.size}}</td><td>{{getUserName(f.uploadedBy)}}</td><td>{{f.stage}}</td><td>{{f.date}}</td></tr></tbody></table>
           <div v-else class="empty-state"><div class="empty-icon">📎</div><p>暂无文件</p></div>
         </div>
       </div>
@@ -520,40 +398,22 @@
     </main>
   </div>
 
-  <!-- ==================== 创建项目弹窗 ==================== -->
+  <!-- ==================== 模态框 ==================== -->
+
+  <!-- 创建项目 -->
   <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal=false">
     <div class="modal">
-      <div class="modal-header">
-        <h3>创建新项目</h3>
-        <button class="modal-close" @click="showCreateModal=false">×</button>
-      </div>
+      <div class="modal-header"><h3>创建新项目</h3><button class="modal-close" @click="showCreateModal=false">×</button></div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>项目名称 *</label>
-          <input class="form-input" v-model="newProject.name" placeholder="例如：智能门锁V2.0">
-        </div>
-        <div class="form-group">
-          <label>项目描述 *</label>
-          <textarea class="form-input" v-model="newProject.description" rows="3" placeholder="简要描述项目目标和背景..."></textarea>
-        </div>
-        <div class="form-group">
-          <label>产品类型</label>
-          <select class="form-input" v-model="newProject.type">
-            <option>智能硬件</option>
-            <option>消费电子</option>
-            <option>工业设备</option>
-            <option>软件平台</option>
-          </select>
-        </div>
+        <div class="form-group"><label>项目名称 *</label><input class="form-input" v-model="newProject.name" placeholder="例如：智能门锁V2.0"></div>
+        <div class="form-group"><label>项目描述 *</label><textarea class="form-input" v-model="newProject.description" rows="3" placeholder="简要描述项目目标和背景..."></textarea></div>
+        <div class="form-group"><label>产品类型</label><select class="form-input" v-model="newProject.type"><option>智能硬件</option><option>消费电子</option><option>工业设备</option><option>软件平台</option></select></div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" @click="showCreateModal=false">取消</button>
-        <button class="btn btn-primary" @click="createProject()" :disabled="!newProject.name||!newProject.description">创建项目</button>
-      </div>
+      <div class="modal-footer"><button class="btn btn-outline" @click="showCreateModal=false">取消</button><button class="btn btn-primary" @click="createProject()" :disabled="!newProject.name||!newProject.description">创建项目</button></div>
     </div>
   </div>
 
-  <!-- 添加子任务弹窗 -->
+  <!-- 添加子任务 -->
   <div v-if="showSubTaskModal" class="modal-overlay" @click.self="showSubTaskModal=false">
     <div class="modal modal-sm">
       <div class="modal-header"><h3>添加子任务</h3><button class="modal-close" @click="showSubTaskModal=false">×</button></div>
@@ -561,18 +421,104 @@
         <div class="form-group"><label>任务名称</label><input class="form-input" v-model="newSubTask.name"></div>
         <div class="form-group"><label>预估工时（小时）</label><input class="form-input" type="number" v-model.number="newSubTask.hours"></div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" @click="showSubTaskModal=false">取消</button>
-        <button class="btn btn-primary" @click="confirmAddSubTask()">添加</button>
+      <div class="modal-footer"><button class="btn btn-outline" @click="showSubTaskModal=false">取消</button><button class="btn btn-primary" @click="confirmAddSubTask()">添加</button></div>
+    </div>
+  </div>
+
+  <!-- AI工具执行 -->
+  <div v-if="showToolModal" class="modal-overlay" @click.self="showToolModal=false">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>{{activeTool.icon}} {{activeTool.name}}</h3>
+        <button class="modal-close" @click="showToolModal=false">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:#6b7280;margin-bottom:16px;">{{activeTool.description}}</p>
+
+        <!-- 工具输入 -->
+        <div v-if="!toolOutput">
+          <div class="form-group"><label>输入描述 / 关键信息</label>
+            <textarea class="form-input" v-model="toolInput" rows="4" :placeholder="activeTool.placeholder || '请输入需要AI处理的内容...'"></textarea>
+          </div>
+          <button class="btn btn-ai" @click="runTool()" :disabled="!toolInput">🤖 开始生成</button>
+        </div>
+
+        <!-- 工具输出 -->
+        <div v-else>
+          <div class="tool-output-box">
+            <div class="tool-output-label">AI 生成结果</div>
+            <div class="doc-preview" v-html="renderDoc(toolOutput)"></div>
+          </div>
+
+          <!-- 路由到下一步 -->
+          <div class="route-section">
+            <div class="route-title">📤 发送结果到下一步</div>
+            <div class="route-form">
+              <div class="form-group">
+                <label>指定接收人</label>
+                <select class="form-input" v-model="routeTarget">
+                  <option value="">选择人员...</option>
+                  <optgroup v-for="dept in deptConfig" :key="dept.key" :label="dept.name">
+                    <option v-for="u in getDeptUsers(dept.key)" :key="u.id" :value="u.id">{{u.name}} - {{u.title}}</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>备注（可选）</label>
+                <input class="form-input" v-model="routeNote" placeholder="需要对方做什么...">
+              </div>
+            </div>
+            <div class="route-actions">
+              <button class="btn btn-primary" @click="routeToolOutput()" :disabled="!routeTarget">📤 发送并高亮提醒</button>
+              <button class="btn btn-outline" @click="showToolModal=false">仅保存</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Toast -->
-  <transition name="toast">
-    <div v-if="toast.show" class="toast" :class="toast.type">{{toast.msg}}</div>
-  </transition>
+  <!-- 查看工具产出详情 -->
+  <div v-if="showOutputDetailModal" class="modal-overlay" @click.self="showOutputDetailModal=false">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>{{viewingOutput.toolIcon}} {{viewingOutput.toolName}} — 产出详情</h3>
+        <button class="modal-close" @click="showOutputDetailModal=false">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="tool-output-meta">
+          <span>来自：<strong>{{getUserName(viewingOutput.fromUser)}}</strong></span>
+          <span>日期：{{viewingOutput.date}}</span>
+          <span v-if="viewingOutput.routeNote">备注：{{viewingOutput.routeNote}}</span>
+        </div>
+        <div class="doc-preview" v-html="renderDoc(viewingOutput.content)"></div>
+        <div class="route-section" v-if="viewingOutput.routedTo === currentUser?.id && !viewingOutput.read">
+          <button class="btn btn-primary" @click="markOutputRead(viewingOutput)">✅ 标记已处理</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <!-- 自定义工具添加 -->
+  <div v-if="showAddToolModal" class="modal-overlay" @click.self="showAddToolModal=false">
+    <div class="modal">
+      <div class="modal-header"><h3>添加自定义AI工具</h3><button class="modal-close" @click="showAddToolModal=false">×</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>工具名称 *</label><input class="form-input" v-model="customTool.name" placeholder="例如：竞品分析工具"></div>
+        <div class="form-group"><label>图标（emoji）</label><input class="form-input" v-model="customTool.icon" placeholder="🔧" style="width:80px;"></div>
+        <div class="form-group"><label>功能描述</label><textarea class="form-input" v-model="customTool.description" rows="2" placeholder="简述工具功能..."></textarea></div>
+        <div class="form-group"><label>所属部门</label>
+          <select class="form-input" v-model="customTool.deptKey">
+            <option v-for="d in deptConfig" :key="d.key" :value="d.key">{{d.name}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-outline" @click="showAddToolModal=false">取消</button><button class="btn btn-primary" @click="addCustomTool()" :disabled="!customTool.name">添加工具</button></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <transition name="toast"><div v-if="toast.show" class="toast" :class="toast.type">{{toast.msg}}</div></transition>
 </div>
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
