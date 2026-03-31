@@ -9,38 +9,69 @@
 <body>
 <div id="app">
 
-  <!-- ==================== 登录页（按部门分组） ==================== -->
+  <!-- ==================== 登录页（两步式：选部门 → 选人员） ==================== -->
   <div v-if="view==='login'" class="login-page">
-    <div class="login-header">
-      <div class="login-logo">⚡</div>
-      <h1>AI研发流程管理平台</h1>
-      <p>选择您的部门和角色进入系统</p>
-    </div>
-    <div class="dept-login-grid">
-      <div v-for="dept in deptConfig" :key="dept.key" class="dept-login-card" :style="{'--dept-color': dept.color}">
-        <div class="dept-login-header">
-          <span class="dept-login-icon">{{dept.icon}}</span>
-          <span class="dept-login-name">{{dept.name}}</span>
+    <div class="login-bg-pattern"></div>
+    <div class="login-container">
+      <div class="login-brand">
+        <div class="login-brand-icon"><span>⚡</span></div>
+        <h1 class="login-brand-title">AI 研发流程管理平台</h1>
+        <p class="login-brand-sub">智能驱动研发 · 高效协同管理</p>
+      </div>
+
+      <!-- Step 1: 选择部门 -->
+      <div v-if="!selectedLoginDept" class="login-step">
+        <div class="login-step-label">选择您所在的部门</div>
+        <div class="login-dept-grid">
+          <div v-for="dept in deptConfig" :key="dept.key"
+               class="login-dept-card" :style="{'--dc': dept.color}"
+               @click="selectedLoginDept=dept.key">
+            <div class="login-dept-icon-wrap"><span class="login-dept-icon">{{dept.icon}}</span></div>
+            <div class="login-dept-info">
+              <div class="login-dept-name">{{dept.name}}</div>
+              <div class="login-dept-count">{{getDeptUsers(dept.key).length}} 位成员 · {{dept.defaultTools.length}} 个AI工具</div>
+            </div>
+            <span class="login-dept-arrow">›</span>
+          </div>
         </div>
-        <div class="dept-login-roles">
-          <div class="dept-role-section-label">成员</div>
-          <div v-for="u in getDeptUsers(dept.key)" :key="u.id" class="dept-role-btn" @click="login(u)">
-            <span class="dept-role-avatar">{{u.avatar}}</span>
-            <div class="dept-role-info">
-              <span class="dept-role-name">{{u.name}}</span>
-              <span class="dept-role-title">{{u.title}}</span>
+      </div>
+
+      <!-- Step 2: 选择人员 -->
+      <div v-else class="login-step">
+        <button class="login-back-btn" @click="selectedLoginDept=null">
+          <span class="login-back-icon">‹</span> 返回部门选择
+        </button>
+        <div class="login-step-dept-header" :style="{'--dc': selectedLoginDeptConfig.color}">
+          <span class="login-step-dept-icon">{{selectedLoginDeptConfig.icon}}</span>
+          <div>
+            <div class="login-step-dept-name">{{selectedLoginDeptConfig.name}}</div>
+            <div class="login-step-dept-tools">
+              <span v-for="tool in selectedLoginDeptConfig.defaultTools.slice(0,5)" :key="tool.id" class="login-mini-tool">{{tool.icon}}</span>
+              <span v-if="selectedLoginDeptConfig.defaultTools.length > 5" class="login-mini-tool-more">+{{selectedLoginDeptConfig.defaultTools.length - 5}}</span>
             </div>
           </div>
         </div>
-        <div class="dept-login-tools">
-          <div class="dept-role-section-label">AI 工具</div>
-          <div class="dept-tool-tags">
-            <span v-for="tool in dept.defaultTools.slice(0,4)" :key="tool.id" class="dept-tool-tag">
-              {{tool.icon}} {{tool.name}}
-            </span>
-            <span v-if="dept.defaultTools.length > 4" class="dept-tool-more">+{{dept.defaultTools.length - 4}}</span>
+
+        <div class="login-step-label">选择您的身份登录</div>
+        <div class="login-user-grid">
+          <div v-for="u in getDeptUsers(selectedLoginDept)" :key="u.id"
+               class="login-user-card" @click="login(u)">
+            <div class="login-user-avatar" :style="{'--dc': selectedLoginDeptConfig.color}">{{u.name.charAt(0)}}</div>
+            <div class="login-user-info">
+              <div class="login-user-name">{{u.name}}</div>
+              <div class="login-user-title">{{u.title}}</div>
+            </div>
+            <span class="login-user-role-tag" :class="'role-'+u.role">{{u.role==='dept_manager'?'经理':u.role==='dept_lead'?'主管':u.role==='project_manager'?'PM':u.role==='product_manager'?'产品':'工程师'}}</span>
           </div>
         </div>
+      </div>
+
+      <div class="login-footer">
+        <span>Powered by AI</span>
+        <span class="login-footer-dot">·</span>
+        <span>{{users.length}} 位团队成员</span>
+        <span class="login-footer-dot">·</span>
+        <span>7 大部门</span>
       </div>
     </div>
   </div>

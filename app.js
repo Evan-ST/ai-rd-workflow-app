@@ -304,7 +304,7 @@ function computeSimpleDiff(oldText, newText) {
 createApp({
   data() {
     return {
-      view: 'login', currentUser: null,
+      view: 'login', currentUser: null, selectedLoginDept: null,
       projects: [], currentProjectId: null, currentStage: 'prd_draft', editingPRD: false,
       showCreateModal: false, newProject: { name: '', description: '', type: '智能硬件' },
       showSubTaskModal: false, subTaskParentId: null, newSubTask: { name: '', hours: 8 },
@@ -342,6 +342,7 @@ createApp({
 
   computed: {
     today() { return new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' }); },
+    selectedLoginDeptConfig() { return DEPT_CONFIG.find(d => d.key === this.selectedLoginDept) || DEPT_CONFIG[0]; },
     isEngineerOrLead() { return ['engineer','dept_lead','project_manager'].includes(this.currentUser?.role); },
     projectManagers() { return this.users.filter(u => u.role === 'project_manager'); },
     currentProject() { return this.projects.find(p => p.id === this.currentProjectId) || null; },
@@ -576,7 +577,7 @@ createApp({
 
   methods: {
     getDeptUsers(deptKey) { return this.users.filter(u => u.deptKey === deptKey); },
-    login(user) { this.currentUser = user; this.view = 'dashboard'; this.showToast(`欢迎，${user.name}（${user.title}）`, 'success'); },
+    login(user) { this.currentUser = user; this.selectedLoginDept = null; this.view = 'dashboard'; this.showToast(`欢迎，${user.name}（${user.title}）`, 'success'); },
     goToAction(a) { this.openProject(a.projectId); this.currentStage = a.stage; },
     openProject(id) { this.currentProjectId = id; const p = this.projects.find(pp => pp.id === id); if (p) this.currentStage = p.status; this.editingPRD = false; this.view = 'project'; },
     openCreateProject() { this.newProject = { name:'', description:'', type:'智能硬件' }; this.showCreateModal = true; },
