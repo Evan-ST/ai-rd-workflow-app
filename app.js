@@ -107,7 +107,7 @@ const USERS = [
   { id: 'ou_c6ea7db2ee3a5318c39c2fd37db79b4a', name: '覃思诚', role: 'engineer', title: '项目助理', department: '项目部', deptKey: 'project', specialty: '项目助理', avatar: '📎' },
   { id: 'ou_ee62ac0f60518d1f629313593bfbaefb', name: '向娟', role: 'engineer', title: '项目助理', department: '项目部', deptKey: 'project', specialty: '项目助理', avatar: '📎' },
   // 硬件研发部
-  { id: 'ou_4c8bece9f97b3632ec4636e9bbd928b8', name: '范进武', role: 'dept_lead', title: '硬件经理', department: '硬件研发部', deptKey: 'hardware', avatar: '⚡' },
+  { id: 'ou_4c8bece9f97b3632ec4636e9bbd928b8', name: '范进武', role: 'dept_manager', title: '硬件经理', department: '硬件研发部', deptKey: 'hardware', avatar: '⚡' },
   { id: 'ou_257565318df859ce2261bbe26df04242', name: '袁永钦', role: 'engineer', title: '硬件工程师', department: '硬件研发部', deptKey: 'hardware', specialty: '硬件工程师', avatar: '🔌' },
   { id: 'ou_26bd56d1da5f5fb34ce7c17088216df7', name: '黎扬卫', role: 'engineer', title: '硬件工程师', department: '硬件研发部', deptKey: 'hardware', specialty: '硬件工程师', avatar: '🔌' },
   { id: 'ou_ef18838a4c4bcf2c4757a6887fc193f9', name: '邓责评', role: 'engineer', title: '硬件测试工程师', department: '硬件研发部', deptKey: 'hardware', specialty: '硬件测试工程师', avatar: '🧪' },
@@ -117,12 +117,12 @@ const USERS = [
   { id: 'ou_ed659bac883d875f9356c90cc9cd1779', name: '刘辉', role: 'engineer', title: '射频工程师', department: '硬件研发部', deptKey: 'hardware', specialty: '射频工程师', avatar: '📡' },
   { id: 'oc_517ca200a661566d240108a8ae2b53d8', name: '陈春云', role: 'engineer', title: '光学工程师', department: '硬件研发部', deptKey: 'hardware', specialty: '光学工程师', avatar: '🔭' },
   // 结构组
-  { id: 'ou_7c97fae8117642dae7547e2ed1029c77', name: '刘建飞', role: 'dept_lead', title: '结构经理', department: '结构组', deptKey: 'structure', avatar: '🔧' },
+  { id: 'ou_7c97fae8117642dae7547e2ed1029c77', name: '刘建飞', role: 'dept_manager', title: '结构经理', department: '结构组', deptKey: 'structure', avatar: '🔧' },
   { id: 'ou_5919590076ae7807eb2f72a73c135f44', name: '王森', role: 'engineer', title: '结构工程师', department: '结构组', deptKey: 'structure', specialty: '结构工程师', avatar: '📏' },
   { id: 'ou_5c8e42d7d48cbd624df4ae745a1e464b', name: '杨广基', role: 'engineer', title: '结构工程师', department: '结构组', deptKey: 'structure', specialty: '结构工程师', avatar: '📏' },
   { id: 'oc_19185c95acb6d54abc1137f312c76261', name: '袁善远', role: 'engineer', title: '结构工程师', department: '结构组', deptKey: 'structure', specialty: '结构工程师', avatar: '📏' },
   // 软件组
-  { id: 'ou_01c3895043ce0d04f87c966eb29fb779', name: '金黎', role: 'dept_lead', title: '软件经理', department: '软件组', deptKey: 'software', avatar: '💻' },
+  { id: 'ou_01c3895043ce0d04f87c966eb29fb779', name: '金黎', role: 'dept_manager', title: '软件经理', department: '软件组', deptKey: 'software', avatar: '💻' },
   { id: 'ou_ca86da0eebec7d27ec3f7a6b1fde32f1', name: '茅飞健', role: 'engineer', title: '后端工程师', department: '软件组', deptKey: 'software', specialty: '后端开发', avatar: '⌨️' },
   { id: 'ou_d57dcb80fe4c9920d4262a22bded3080', name: '王瑞', role: 'engineer', title: '后端工程师', department: '软件组', deptKey: 'software', specialty: '后端开发', avatar: '⌨️' },
   { id: 'ou_40e85a76a0f7769cf04bb7ca93bbf897', name: '谢梦辉', role: 'engineer', title: '后端工程师', department: '软件组', deptKey: 'software', specialty: '后端开发', avatar: '⌨️' },
