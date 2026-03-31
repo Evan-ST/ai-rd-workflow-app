@@ -107,7 +107,7 @@ const USERS = [
   { id: 'ou_c6ea7db2ee3a5318c39c2fd37db79b4a', name: '覃思诚', role: 'engineer', title: '项目助理', department: '项目部', deptKey: 'project', specialty: '项目助理', avatar: '📎' },
   { id: 'ou_ee62ac0f60518d1f629313593bfbaefb', name: '向娟', role: 'engineer', title: '项目助理', department: '项目部', deptKey: 'project', specialty: '项目助理', avatar: '📎' },
   // 硬件研发部
-  { id: 'ou_4c8bece9f97b3632ec4636e9bbd928b8', name: '范进武', role: 'dept_lead', title: '硬件经理', department: '硬件研发部', deptKey: 'hardware', avatar: '⚡' },
+  { id: 'ou_4c8bece9f97b3632ec4636e9bbd928b8', name: '范进武', role: 'dept_lead', title: '产品总监', department: '产品部', deptKey: 'product', avatar: '👔' },
   { id: 'ou_257565318df859ce2261bbe26df04242', name: '袁永钦', role: 'engineer', title: '硬件工程师', department: '硬件研发部', deptKey: 'hardware', specialty: '硬件工程师', avatar: '🔌' },
   { id: 'ou_26bd56d1da5f5fb34ce7c17088216df7', name: '黎扬卫', role: 'engineer', title: '硬件工程师', department: '硬件研发部', deptKey: 'hardware', specialty: '硬件工程师', avatar: '🔌' },
   { id: 'ou_ef18838a4c4bcf2c4757a6887fc193f9', name: '邓责评', role: 'engineer', title: '硬件测试工程师', department: '硬件研发部', deptKey: 'hardware', specialty: '硬件测试工程师', avatar: '🧪' },
@@ -158,6 +158,7 @@ const STAGES = [
 const STAGE_ORDER = STAGES.map(s => s.key);
 
 const DEPARTMENTS = [
+  { key: 'product', name: '产品部', icon: '📦', leadId: 'ou_4c8bece9f97b3632ec4636e9bbd928b8', leadName: '范进武' },
   { key: 'hardware', name: '硬件研发部', icon: '⚡', leadId: 'ou_4c8bece9f97b3632ec4636e9bbd928b8', leadName: '范进武' },
   { key: 'software', name: '软件组', icon: '💻', leadId: 'ou_01c3895043ce0d04f87c966eb29fb779', leadName: '金黎' },
   { key: 'structure', name: '结构组', icon: '🔧', leadId: 'ou_7c97fae8117642dae7547e2ed1029c77', leadName: '刘建飞' },
